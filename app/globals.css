@@ -1,26 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 @import "tailwindcss";
 
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fc-bg:          #f4f1ea;
+  --fc-bg-alt:      #ece8df;
+  --fc-card:        #ffffff;
+  --fc-card-empty:  #e9e5db;
+  --fc-ink:         #1b1f24;
+  --fc-ink-muted:   #6b7280;
+  --fc-line:        #dcd8cc;
+  --fc-accent:      #2a5b9e;
+  --fc-accent-soft: oklch(0.94 0.04 250);
+  --fc-rep:         #c2410c;
+  --fc-rep-soft:    oklch(0.95 0.04 50);
+  --fc-ok:          #166534;
+  --fc-radius:      10px;
+  --fc-radius-lg:   14px;
+  --fc-shadow:      0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--fc-bg);
+  color: var(--fc-ink);
+  font-family: 'Manrope', 'Helvetica Neue', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+button { font: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; }
+input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.fc-app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 76px; }
+@media (min-width: 900px) { .fc-app { padding-bottom: 0; } }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.fc-topbar { display: flex; align-items: center; gap: 16px; padding: 14px 20px; background: var(--fc-card); border-bottom: 1px solid var(--fc-line); position: sticky; top: 0; z-index: 20; }
+.fc-nav { display: flex; gap: 4px; }
+.fc-nav-desktop { display: none; }
+@media (min-width: 900px) { .fc-nav-desktop { display: flex; } }
+.fc-nav button { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; color: var(--fc-ink-muted); font-weight: 600; font-size: 14px; position: relative; }
+.fc-nav button:hover { background: var(--fc-bg-alt); color: var(--fc-ink); }
+.fc-nav button.is-active { background: var(--fc-accent-soft); color: var(--fc-accent); }
+
+.fc-user { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+@media (min-width: 900px) { .fc-user { margin-left: 0; } }
+.fc-user-name { font-size: 14px; font-weight: 600; }
+
+.fc-nav-mobile { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--fc-card); border-top: 1px solid var(--fc-line); z-index: 20; padding: 6px 4px; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+@media (min-width: 900px) { .fc-nav-mobile { display: none; } }
+.fc-nav-mobile button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; color: var(--fc-ink-muted); font-size: 11px; font-weight: 600; position: relative; }
+.fc-nav-mobile button.is-active { color: var(--fc-accent); }
+
+.fc-main { flex: 1; padding: 20px; max-width: 1280px; width: 100%; margin: 0 auto; }
+@media (max-width: 600px) { .fc-main { padding: 14px; } }
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.fc-logo { display: inline-flex; align-items: center; gap: 8px; }
+.fc-logo-text { font-weight: 800; font-size: 17px; letter-spacing: -0.5px; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.fc-btn-primary { background: var(--fc-accent); color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: transform .08s, opacity .15s; }
+.fc-btn-primary:hover { opacity: 0.9; }
+.fc-btn-primary:active { transform: translateY(1px); }
+.fc-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.fc-btn-ghost { padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; color: var(--fc-ink); border: 1px solid var(--fc-line); background: var(--fc-card); }
+.fc-btn-ghost:hover { background: var(--fc-bg-alt); }
+.fc-btn-block { width: 100%; }
+.fc-btn-sm { padding: 6px 10px; font-size: 12px; }
+.fc-back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; color: var(--fc-ink-muted); font-size: 13px; font-weight: 600; }
+.fc-back:hover { background: var(--fc-bg-alt); color: var(--fc-ink); }
+
+/* ============================================================
+   TOOLBAR + TABS
+   ============================================================ */
+.fc-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+.fc-toolbar-right { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+.fc-tabs { display: flex; gap: 4px; background: var(--fc-card); padding: 4px; border-radius: 10px; border: 1px solid var(--fc-line); }
+.fc-tabs button { padding: 8px 14px; border-radius: 7px; font-weight: 600; font-size: 13px; color: var(--fc-ink-muted); display: inline-flex; align-items: center; gap: 6px; }
+.fc-tabs button:hover { color: var(--fc-ink); }
+.fc-tabs button.is-active { background: var(--fc-accent-soft); color: var(--fc-accent); }
+.fc-tab-count { background: rgba(0,0,0,0.06); font-size: 11px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.fc-search { display: flex; align-items: center; gap: 6px; background: var(--fc-card); border: 1px solid var(--fc-line); padding: 8px 12px; border-radius: 8px; color: var(--fc-ink-muted); }
+.fc-search input { border: 0; outline: 0; background: transparent; min-width: 160px; font-size: 14px; }
+.fc-select { background: var(--fc-card); border: 1px solid var(--fc-line); padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; }
+
+/* ============================================================
+   ALBUM GRID
+   ============================================================ */
+.fc-album-grid { display: grid; gap: 14px; }
+.fc-country-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); text-align: left; transition: transform .12s, box-shadow .15s, border-color .15s; width: 100%; }
+.fc-country-card:hover { transform: translateY(-2px); box-shadow: var(--fc-shadow); border-color: var(--fc-accent); }
+.fc-country-card.is-complete { border-color: var(--fc-ok); background: oklch(0.97 0.04 145); }
+.fc-country-head { display: flex; align-items: center; gap: 10px; }
+.fc-country-name { font-weight: 700; font-size: 15px; }
+.fc-country-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
+.fc-mute { color: var(--fc-ink-muted); font-weight: 500; }
+.fc-rep-tag { background: var(--fc-rep-soft); color: var(--fc-rep); font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 700; margin-left: auto; }
+.fc-check { background: oklch(0.95 0.06 145); color: var(--fc-ok); border-radius: 999px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-left: auto; }
+
+/* ============================================================
+   BADGE
+   ============================================================ */
+.fc-badge { border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; letter-spacing: -0.5px; }
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+.fc-progress { background: var(--fc-card-empty); border-radius: 999px; overflow: hidden; width: 100%; }
+.fc-progress-fill { height: 100%; border-radius: 999px; transition: width .25s; }
+
+/* ============================================================
+   COUNTRY DETAIL
+   ============================================================ */
+.fc-country-hero { display: flex; gap: 18px; align-items: center; padding: 20px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); margin-bottom: 18px; margin-top: 12px; }
+.fc-country-hero-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.fc-country-hero h1 { margin: 0; font-size: 24px; letter-spacing: -0.5px; }
+.fc-country-hero-meta { display: flex; gap: 12px; align-items: center; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+.fc-page-toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; font-size: 13px; }
+.fc-quick-actions { display: flex; gap: 8px; }
+.fc-sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+.fc-sticker-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.fc-cell-controls { display: flex; }
+
+/* ============================================================
+   STICKER CARD
+   ============================================================ */
+.fc-sticker { position: relative; border-radius: 8px; border: 1px solid var(--fc-line); display: flex; flex-direction: column; text-align: left; overflow: hidden; transition: transform .12s, box-shadow .15s; }
+.fc-sticker:hover { transform: translateY(-2px); box-shadow: var(--fc-shadow); }
+.fc-sticker.is-empty { background: var(--fc-card-empty); border-style: dashed; }
+.fc-sticker.is-repeated { box-shadow: 0 0 0 2px var(--fc-rep) inset; }
+.fc-empty-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--fc-ink-muted); }
+.fc-sticker-portrait { flex: 1; display: flex; align-items: center; justify-content: center; margin: 4px 0; }
+.fc-sticker-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; opacity: 0.7; letter-spacing: 0.5px; }
+.fc-sticker-title { font-weight: 600; line-height: 1.1; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-sticker-pos { font-family: 'JetBrains Mono', monospace; opacity: 0.6; margin-top: 2px; }
+.fc-rep-pill { position: absolute; top: 6px; right: 6px; background: var(--fc-rep); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+
+/* ============================================================
+   STEPPER
+   ============================================================ */
+.fc-stepper { display: inline-flex; align-items: center; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 7px; overflow: hidden; }
+.fc-stepper button { width: 28px; height: 28px; font-size: 16px; font-weight: 700; color: var(--fc-ink-muted); }
+.fc-stepper button:hover:not(:disabled) { background: var(--fc-bg-alt); color: var(--fc-accent); }
+.fc-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
+.fc-stepper-val { min-width: 28px; text-align: center; font-weight: 700; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.fc-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; backdrop-filter: blur(4px); }
+.fc-modal { background: var(--fc-card); border-radius: var(--fc-radius-lg); width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+.fc-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.fc-modal-head h2 { margin: 4px 0 0; font-size: 20px; }
+.fc-modal-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--fc-ink-muted); font-weight: 700; }
+.fc-modal-preview { display: flex; justify-content: center; padding: 12px 0; }
+.fc-modal-meta { display: flex; flex-direction: column; gap: 6px; font-size: 14px; margin: 12px 0; }
+.fc-modal-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--fc-line); }
+.fc-x { width: 32px; height: 32px; border-radius: 6px; font-size: 22px; color: var(--fc-ink-muted); display: flex; align-items: center; justify-content: center; line-height: 1; }
+.fc-x:hover { background: var(--fc-bg-alt); }
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+.fc-auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: radial-gradient(circle at 20% 10%, oklch(0.96 0.04 250) 0%, transparent 50%), radial-gradient(circle at 80% 90%, oklch(0.95 0.05 145) 0%, transparent 50%), var(--fc-bg); }
+.fc-auth-card { width: 100%; max-width: 400px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); padding: 32px; box-shadow: var(--fc-shadow); }
+.fc-auth-sub { color: var(--fc-ink-muted); font-size: 14px; margin: 14px 0 24px; }
+.fc-auth-tabs { display: flex; background: var(--fc-bg-alt); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+.fc-auth-tabs button { flex: 1; padding: 8px; border-radius: 6px; font-weight: 600; font-size: 14px; color: var(--fc-ink-muted); }
+.fc-auth-tabs button.is-active { background: var(--fc-card); color: var(--fc-ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.fc-auth-form { display: flex; flex-direction: column; gap: 14px; }
+.fc-auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+.fc-auth-form input { padding: 10px 12px; border: 1px solid var(--fc-line); border-radius: 8px; font-size: 14px; background: var(--fc-bg); }
+.fc-auth-form input:focus { outline: 2px solid var(--fc-accent); outline-offset: -1px; }
+.fc-auth-err { background: oklch(0.95 0.06 25); color: oklch(0.40 0.15 25); padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 500; }
+.fc-auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; color: var(--fc-ink-muted); font-size: 12px; }
+.fc-auth-divider::before, .fc-auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--fc-line); }
+.fc-auth-note { margin-top: 20px; font-size: 11px; color: var(--fc-ink-muted); text-align: center; line-height: 1.4; }
+
+/* ============================================================
+   FRIENDS / MATCHES
+   ============================================================ */
+.fc-matches { display: flex; flex-direction: column; gap: 14px; }
+.fc-match-card { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); padding: 18px; }
+.fc-match-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.fc-match-info { flex: 1; }
+.fc-match-name { font-weight: 700; font-size: 15px; }
+.fc-match-score { text-align: right; }
+.fc-match-num { font-size: 24px; font-weight: 800; color: var(--fc-accent); line-height: 1; }
+.fc-match-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 600px) { .fc-match-cols { grid-template-columns: 1fr; } }
+.fc-col-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fc-ink-muted); margin-bottom: 8px; }
+.fc-chip-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.fc-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: var(--fc-bg-alt); color: var(--fc-ink); border: 1px solid transparent; }
+.fc-chip-want { background: var(--fc-accent-soft); color: var(--fc-accent); }
+.fc-chip-offer { background: oklch(0.95 0.06 145); color: var(--fc-ok); }
+.fc-match-actions { display: flex; gap: 8px; }
+.fc-friend-list { display: flex; flex-direction: column; gap: 10px; }
+.fc-friend-row { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius); padding: 14px; display: flex; align-items: center; gap: 14px; }
+.fc-friend-info { flex: 1; min-width: 0; }
+.fc-friend-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.fc-avatar { width: 42px; height: 42px; border-radius: 999px; background: var(--fc-accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.fc-avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+.fc-chat-screen { display: flex; flex-direction: column; height: calc(100vh - 64px - 76px); max-height: 800px; }
+@media (min-width: 900px) { .fc-chat-screen { height: calc(100vh - 64px - 40px); } }
+.fc-chat-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg) var(--fc-radius-lg) 0 0; }
+.fc-chat-body { flex: 1; overflow-y: auto; padding: 18px; background: var(--fc-card); border-left: 1px solid var(--fc-line); border-right: 1px solid var(--fc-line); display: flex; flex-direction: column; gap: 10px; }
+.fc-msg { max-width: 75%; background: var(--fc-bg-alt); padding: 10px 14px; border-radius: 14px; border-bottom-left-radius: 4px; align-self: flex-start; }
+.fc-msg.is-me { background: var(--fc-accent); color: white; align-self: flex-end; border-radius: 14px; border-bottom-right-radius: 4px; }
+.fc-msg.is-proposal { background: oklch(0.95 0.06 145); color: var(--fc-ok); font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.5; border-radius: 10px; }
+.fc-msg.is-me.is-proposal { background: oklch(0.40 0.14 145); color: white; }
+.fc-msg-text { white-space: pre-wrap; font-size: 14px; line-height: 1.4; }
+.fc-msg-time { font-size: 10px; opacity: 0.6; margin-top: 4px; }
+.fc-chat-input { display: flex; gap: 8px; padding: 12px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 0 0 var(--fc-radius-lg) var(--fc-radius-lg); border-top: 0; }
+.fc-chat-input input { flex: 1; padding: 10px 14px; border: 1px solid var(--fc-line); border-radius: 999px; background: var(--fc-bg); font-size: 14px; }
+.fc-chat-input input:focus { outline: 2px solid var(--fc-accent); outline-offset: -1px; }
+
+/* ============================================================
+   STATS
+   ============================================================ */
+.fc-stats-hero { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); padding: 24px; display: flex; gap: 24px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.fc-stats-numbers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; flex: 1; min-width: 240px; }
+@media (min-width: 600px) { .fc-stats-numbers { grid-template-columns: repeat(4, 1fr); } }
+.fc-stat { padding: 12px 4px; }
+.fc-stat-num { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: var(--fc-ink); }
+.fc-stat-label { font-size: 12px; color: var(--fc-ink-muted); font-weight: 600; margin-top: 4px; }
+.fc-stats-cols { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 900px) { .fc-stats-cols { grid-template-columns: 1.4fr 1fr 1fr; } }
+.fc-card { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); padding: 18px; }
+.fc-card h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }
+.fc-rank-list { display: flex; flex-direction: column; gap: 10px; }
+.fc-rank-row { display: grid; grid-template-columns: 28px 32px 1fr 1.2fr 40px; gap: 10px; align-items: center; font-size: 13px; }
+.fc-rank-row.is-me { font-weight: 700; }
+.fc-rank-pos { font-family: 'JetBrains Mono', monospace; color: var(--fc-ink-muted); font-weight: 700; }
+.fc-rank-num { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
+.fc-mini-list { display: flex; flex-direction: column; gap: 10px; }
+.fc-mini-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.fc-mini-name { flex: 1; font-weight: 600; }
+
+/* ============================================================
+   REPETIDAS
+   ============================================================ */
+.fc-rep-hero { display: flex; gap: 18px; align-items: center; padding: 18px 22px; background: linear-gradient(135deg, var(--fc-rep-soft), var(--fc-card)); border: 1px solid var(--fc-line); border-radius: var(--fc-radius-lg); margin-bottom: 18px; flex-wrap: wrap; }
+.fc-rep-big-num { font-size: 48px; font-weight: 800; color: var(--fc-rep); line-height: 1; }
+.fc-rep-groups { display: flex; flex-direction: column; gap: 14px; }
+.fc-rep-group-head { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--fc-bg-alt); border-radius: 8px; margin-bottom: 6px; }
+.fc-rep-row { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 8px; }
+.fc-rep-info { flex: 1; min-width: 0; }
+.fc-rep-demand { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.fc-toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+@media (max-width: 600px) { .fc-toast-container { bottom: 84px; } }
+.fc-toast { background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 10px; padding: 12px 16px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.12); animation: toast-in .2s ease; min-width: 220px; max-width: 320px; }
+.fc-toast.success { border-color: var(--fc-ok); background: oklch(0.97 0.04 145); }
+.fc-toast.error { border-color: var(--fc-rep); background: var(--fc-rep-soft); }
+@keyframes toast-in { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.fc-empty-state { text-align: center; padding: 40px 20px; color: var(--fc-ink-muted); font-size: 14px; }
+.fc-badge-rep { display: inline-flex; align-items: center; justify-content: center; background: var(--fc-rep); color: white; border-radius: 999px; font-size: 10px; font-weight: 700; padding: 1px 5px; min-width: 16px; }
