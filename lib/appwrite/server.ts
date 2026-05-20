@@ -17,14 +17,3 @@ export async function createSessionClient() {
   };
 }
 
-export async function createAdminClient() {
-  const client = new Client()
-    .setEndpoint(APPWRITE_ENDPOINT)
-    .setProject(APPWRITE_PROJECT_ID)
-    .setKey(process.env.APPWRITE_API_KEY ?? '');
-
-  return {
-    account:   new Account(client),
-    databases: new Databases(client),
-  };
-}

@@ -5,6 +5,16 @@ import { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_DATABASE_ID, COLLECTIO
 export async function POST(req: Request) {
   const { name, email, password, city = '' } = await req.json();
 
+  if (!name?.trim()) {
+    return NextResponse.json({ error: 'Nome é obrigatório.' }, { status: 400 });
+  }
+  if (!email?.includes('@')) {
+    return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 });
+  }
+  if (!password || password.length < 8) {
+    return NextResponse.json({ error: 'A senha deve ter no mínimo 8 caracteres.' }, { status: 400 });
+  }
+
   const client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID);
   const account = new Account(client);
 
@@ -26,7 +36,7 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({ ok: true });
     res.cookies.set(SESSION_COOKIE_NAME, session.secret, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',

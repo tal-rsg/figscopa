@@ -5,6 +5,7 @@ import { ALL_STICKERS, COUNTRIES, SPECIALS, getCountryTotal, TOTAL_STICKERS } fr
 import { useCollection } from '@/contexts/CollectionContext';
 import { getAccount, getDatabases } from '@/lib/appwrite/client';
 import { APPWRITE_DATABASE_ID, COLLECTIONS } from '@/lib/appwrite/config';
+import { useToast } from '@/components/Toast';
 import CountryBadge from '@/components/CountryBadge';
 import Progress from '@/components/Progress';
 
@@ -12,6 +13,7 @@ type Friend = { id: string; name: string; owned: number };
 
 export default function StatsPage() {
   const { collection } = useCollection();
+  const toast = useToast();
   const [myId, setMyId] = useState('');
   const [myName, setMyName] = useState('');
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -85,10 +87,10 @@ export default function StatsPage() {
         setFriends((profilesRes.documents as unknown as { $id: string; name: string }[]).map(p => ({
           id: p.$id, name: p.name, owned: ownedMap[p.$id] ?? 0,
         })));
-      } catch {}
+      } catch { toast('Erro ao carregar ranking de amigos.', 'error'); }
     }
     load();
-  }, []);
+  }, [toast]);
 
   const ranking = useMemo(() => {
     const all = [{ id: myId, name: myName, owned: stats.owned, isMe: true }, ...friends.map(f => ({ ...f, isMe: false }))];

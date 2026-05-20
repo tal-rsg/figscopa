@@ -1,13 +1,18 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { Query } from 'node-appwrite';
 import { createSessionClient } from '@/lib/appwrite/server';
-import { APPWRITE_DATABASE_ID, COLLECTIONS } from '@/lib/appwrite/config';
+import { APPWRITE_DATABASE_ID, COLLECTIONS, SESSION_COOKIE_NAME } from '@/lib/appwrite/config';
 import { CollectionProvider } from '@/contexts/CollectionContext';
+import { AppwriteSessionProvider } from '@/components/AppwriteSessionProvider';
 import { ToastProvider } from '@/components/Toast';
 import Nav from '@/components/Nav';
 import { ALL_STICKERS } from '@/lib/data';
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value ?? '';
+
   const { account, databases } = await createSessionClient();
 
   let user;
@@ -38,13 +43,15 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   const repCount = ALL_STICKERS.reduce((acc, s) => acc + (initial[s.id] > 1 ? initial[s.id] - 1 : 0), 0);
 
   return (
-    <ToastProvider>
-      <CollectionProvider initial={initial} userId={user.$id}>
-        <div className="fc-app">
-          <Nav profile={profile} repCount={repCount} />
-          <main className="fc-main">{children}</main>
-        </div>
-      </CollectionProvider>
-    </ToastProvider>
+    <AppwriteSessionProvider session={sessionToken}>
+      <ToastProvider>
+        <CollectionProvider initial={initial} userId={user.$id}>
+          <div className="fc-app">
+            <Nav profile={profile} repCount={repCount} />
+            <main className="fc-main">{children}</main>
+          </div>
+        </CollectionProvider>
+      </ToastProvider>
+    </AppwriteSessionProvider>
   );
 }

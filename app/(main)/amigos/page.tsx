@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, MessageCircle } from 'lucide-react';
 import { Query, Permission, Role, ID } from 'appwrite';
-import { ALL_STICKERS } from '@/lib/data';
+import { ALL_STICKERS, TOTAL_STICKERS } from '@/lib/data';
 import { useCollection } from '@/contexts/CollectionContext';
 import { getAccount, getDatabases } from '@/lib/appwrite/client';
 import { APPWRITE_DATABASE_ID, COLLECTIONS } from '@/lib/appwrite/config';
@@ -62,7 +62,7 @@ export default function AmigosPage() {
           friendCollection: colMap[p.$id] ?? {},
           owned: Object.values(colMap[p.$id] ?? {}).filter(v => v > 0).length,
         })));
-      } catch {}
+      } catch { toast('Erro ao carregar amigos.', 'error'); }
       setLoading(false);
     }
     load();
@@ -99,16 +99,21 @@ export default function AmigosPage() {
   async function addFriend(friendId: string) {
     if (!myId) return;
     const databases = getDatabases();
+    const perms = (uid: string) => [Permission.read(Role.user(uid)), Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))];
+    let firstDocId: string | null = null;
     try {
-      const perms = (uid: string) => [Permission.read(Role.user(uid)), Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))];
-      await Promise.all([
-        databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: myId, friend_id: friendId, status: 'accepted' }, perms(myId)),
-        databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' }, perms(friendId)),
-      ]);
+      const doc1 = await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: myId, friend_id: friendId, status: 'accepted' }, perms(myId));
+      firstDocId = doc1.$id;
+      await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' }, perms(friendId));
       toast('Amigo adicionado!', 'success');
       setCandidates([]);
       setSearchEmail('');
-    } catch { toast('Erro ao adicionar amigo.', 'error'); }
+    } catch {
+      if (firstDocId) {
+        try { await databases.deleteDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, firstDocId); } catch {}
+      }
+      toast('Erro ao adicionar amigo.', 'error');
+    }
   }
 
   const initials = (name: string) => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -180,8 +185,8 @@ export default function AmigosPage() {
               <div className="fc-friend-info">
                 <div className="fc-friend-name">{f.name}</div>
                 <div className="fc-mute" style={{ fontSize: 12 }}>{f.city ?? ''}</div>
-                <Progress value={f.owned} total={993} height={4} />
-                <div style={{ fontSize: 11, color: 'var(--fc-ink-muted)', marginTop: 2 }}>{f.owned}/993 ({Math.round(f.owned / 993 * 100)}%)</div>
+                <Progress value={f.owned} total={TOTAL_STICKERS} height={4} />
+                <div style={{ fontSize: 11, color: 'var(--fc-ink-muted)', marginTop: 2 }}>{f.owned}/{TOTAL_STICKERS} ({Math.round(f.owned / TOTAL_STICKERS * 100)}%)</div>
               </div>
               <button className="fc-btn-ghost fc-btn-sm" onClick={() => router.push(`/chat/${f.$id}`)}>
                 Conversar
