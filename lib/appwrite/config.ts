@@ -9,5 +9,4 @@ export const COLLECTIONS = {
   MESSAGES:    'messages',
 } as const;
 
-// Cookie that Appwrite browser SDK sets after login
-export const SESSION_COOKIE_NAME = `a_session_${APPWRITE_PROJECT_ID}`;
+export const SESSION_COOKIE_NAME = 'fc_session';
