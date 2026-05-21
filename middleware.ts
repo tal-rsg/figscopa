@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
-  if (!session && !pathname.startsWith('/login')) {
+  if (!session && !pathname.startsWith('/login') && !pathname.startsWith('/api/')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (session && pathname === '/login') {
