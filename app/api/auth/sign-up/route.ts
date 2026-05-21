@@ -22,11 +22,14 @@ export async function POST(req: Request) {
     const user = await account.create(ID.unique(), email, password, name);
     const session = await account.createEmailPasswordSession(email, password);
 
-    const userClient = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID).setSession(session.secret);
-    const databases = new Databases(userClient);
+    const adminClient = new Client()
+      .setEndpoint(APPWRITE_ENDPOINT)
+      .setProject(APPWRITE_PROJECT_ID)
+      .setKey(process.env.APPWRITE_API_KEY ?? '');
+    const adminDatabases = new Databases(adminClient);
 
     try {
-      await databases.createDocument(
+      await adminDatabases.createDocument(
         APPWRITE_DATABASE_ID,
         COLLECTIONS.PROFILES,
         user.$id,
@@ -35,10 +38,6 @@ export async function POST(req: Request) {
       );
     } catch (profileErr) {
       // Rollback: delete the Appwrite account so the user can try again
-      const adminClient = new Client()
-        .setEndpoint(APPWRITE_ENDPOINT)
-        .setProject(APPWRITE_PROJECT_ID)
-        .setKey(process.env.APPWRITE_API_KEY ?? '');
       await new Users(adminClient).delete(user.$id).catch(() => {});
       throw profileErr;
     }
