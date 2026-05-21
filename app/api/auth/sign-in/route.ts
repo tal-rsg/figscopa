@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
   try {
     const session = await account.createEmailPasswordSession(email, password);
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     res.cookies.set(SESSION_COOKIE_NAME, session.secret, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

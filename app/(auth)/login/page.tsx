@@ -19,7 +19,7 @@ export default function LoginPage() {
     try {
       const endpoint = mode === 'login' ? '/api/auth/sign-in' : '/api/auth/sign-up';
       const body = mode === 'login' ? { email, password: pw } : { name, email, password: pw };
-      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await fetch(endpoint, { method: 'POST', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) return setErr(data.error ?? 'Erro desconhecido');
       router.replace('/album');
