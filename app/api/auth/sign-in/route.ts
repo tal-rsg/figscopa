@@ -9,8 +9,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'E-mail ou senha inválidos.' }, { status: 400 });
   }
 
-  const client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID);
-  const account = new Account(client);
+  // node-appwrite v24 + Appwrite 1.6: session.secret is only populated when using an API key
+  const adminClient = new Client()
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID)
+    .setKey(process.env.APPWRITE_API_KEY ?? '');
+  const account = new Account(adminClient);
 
   try {
     const session = await account.createEmailPasswordSession(email, password);
