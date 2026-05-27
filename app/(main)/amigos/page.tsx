@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, MessageCircle } from 'lucide-react';
 import { Query, ID } from 'appwrite';
@@ -25,48 +25,53 @@ export default function AmigosPage() {
   const [myId, setMyId] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const loadFriends = useCallback(async (userId: string) => {
+    setLoading(true);
+    const databases = getDatabases();
+    try {
+      const fsRes = await databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, [
+        Query.or([Query.equal('user_id', userId), Query.equal('friend_id', userId)]),
+        Query.equal('status', 'accepted'),
+        Query.limit(200),
+      ]);
+
+      const friendIds = (fsRes.documents as unknown as { user_id: string; friend_id: string }[]).map(d =>
+        d.user_id === userId ? d.friend_id : d.user_id
+      );
+
+      if (friendIds.length === 0) { setFriends([]); setLoading(false); return; }
+
+      const [profilesRes, colsRes] = await Promise.all([
+        databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [Query.equal('$id', friendIds), Query.limit(200)]),
+        databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.COLLECTION, [Query.equal('user_id', friendIds), Query.limit(5000)]),
+      ]);
+
+      const colMap: Record<string, Record<string, number>> = {};
+      (colsRes.documents as unknown as { user_id: string; sticker_id: string; count: number }[]).forEach(d => {
+        if (!colMap[d.user_id]) colMap[d.user_id] = {};
+        colMap[d.user_id][d.sticker_id] = d.count;
+      });
+
+      setFriends((profilesRes.documents as unknown as Profile[]).map(p => ({
+        ...p,
+        friendCollection: colMap[p.$id] ?? {},
+        owned: Object.values(colMap[p.$id] ?? {}).filter(v => v > 0).length,
+      })));
+    } catch { toast('Erro ao carregar amigos.', 'error'); }
+    setLoading(false);
+  }, [toast]);
+
   useEffect(() => {
-    async function load() {
-      setLoading(true);
+    async function init() {
       const account = getAccount();
-      const databases = getDatabases();
       try {
         const user = await account.get();
         setMyId(user.$id);
-
-        const fsRes = await databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, [
-          Query.or([Query.equal('user_id', user.$id), Query.equal('friend_id', user.$id)]),
-          Query.equal('status', 'accepted'),
-          Query.limit(200),
-        ]);
-
-        const friendIds = (fsRes.documents as unknown as { user_id: string; friend_id: string }[]).map(d =>
-          d.user_id === user.$id ? d.friend_id : d.user_id
-        );
-
-        if (friendIds.length === 0) { setFriends([]); setLoading(false); return; }
-
-        const [profilesRes, colsRes] = await Promise.all([
-          databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [Query.equal('$id', friendIds), Query.limit(200)]),
-          databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.COLLECTION, [Query.equal('user_id', friendIds), Query.limit(5000)]),
-        ]);
-
-        const colMap: Record<string, Record<string, number>> = {};
-        (colsRes.documents as unknown as { user_id: string; sticker_id: string; count: number }[]).forEach(d => {
-          if (!colMap[d.user_id]) colMap[d.user_id] = {};
-          colMap[d.user_id][d.sticker_id] = d.count;
-        });
-
-        setFriends((profilesRes.documents as unknown as Profile[]).map(p => ({
-          ...p,
-          friendCollection: colMap[p.$id] ?? {},
-          owned: Object.values(colMap[p.$id] ?? {}).filter(v => v > 0).length,
-        })));
-      } catch { toast('Erro ao carregar amigos.', 'error'); }
-      setLoading(false);
+        await loadFriends(user.$id);
+      } catch { toast('Erro ao carregar amigos.', 'error'); setLoading(false); }
     }
-    load();
-  }, []);
+    init();
+  }, [loadFriends]);
 
   const matches = useMemo(() =>
     friends.map(f => {
@@ -112,7 +117,7 @@ export default function AmigosPage() {
     } catch { toast('Erro ao buscar usuário.', 'error'); }
   }
 
-  async function addFriend(friendId: string) {
+  async function addFriend(friendId: string, friendProfile: Profile) {
     if (!myId) return;
     const databases = getDatabases();
     let firstDocId: string | null = null;
@@ -120,9 +125,13 @@ export default function AmigosPage() {
       const doc1 = await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: myId, friend_id: friendId, status: 'accepted' });
       firstDocId = doc1.$id;
       await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' });
-      toast('Amigo adicionado!', 'success');
+      // Optimistic update: add friend immediately
+      setFriends(prev => [...prev, { ...friendProfile, friendCollection: {}, owned: 0 }]);
       setCandidates([]);
       setSearchInput('');
+      toast('Amigo adicionado!', 'success');
+      // Background reload to fetch friend's sticker data
+      loadFriends(myId);
     } catch {
       if (firstDocId) {
         try { await databases.deleteDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, firstDocId); } catch {}
@@ -230,7 +239,7 @@ export default function AmigosPage() {
                   <div className="fc-friend-name">{c.name}</div>
                   <div className="fc-mute" style={{ fontSize: 12 }}>{c.city ?? ''}</div>
                 </div>
-                <button className="fc-btn-primary fc-btn-sm" style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={() => addFriend(c.$id)}>
+                <button className="fc-btn-primary fc-btn-sm" style={{ display: 'flex', gap: 6, alignItems: 'center' }} onClick={() => addFriend(c.$id, c)}>
                   <UserPlus size={14} /> Adicionar
                 </button>
               </div>
