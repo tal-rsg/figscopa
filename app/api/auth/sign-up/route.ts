@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Client, Account, Databases, Users, ID, Permission, Role } from 'node-appwrite';
+import { Client, Account, Databases, Users, ID } from 'node-appwrite';
 import { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_DATABASE_ID, COLLECTIONS, SESSION_COOKIE_NAME } from '@/lib/appwrite/config';
 
 export async function POST(req: Request) {
@@ -32,8 +32,7 @@ export async function POST(req: Request) {
         APPWRITE_DATABASE_ID,
         COLLECTIONS.PROFILES,
         user.$id,
-        { name, email, city },
-        [Permission.read(Role.users()), Permission.update(Role.user(user.$id)), Permission.delete(Role.user(user.$id))]
+        { name, email, city }
       );
     } catch (profileErr) {
       // Rollback: delete the Appwrite account so the user can try again

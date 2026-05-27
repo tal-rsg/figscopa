@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, MessageCircle } from 'lucide-react';
-import { Query, Permission, Role, ID } from 'appwrite';
+import { Query, ID } from 'appwrite';
 import { ALL_STICKERS, TOTAL_STICKERS } from '@/lib/data';
 import { useCollection } from '@/contexts/CollectionContext';
 import { getAccount, getDatabases } from '@/lib/appwrite/client';
@@ -102,12 +102,11 @@ export default function AmigosPage() {
   async function addFriend(friendId: string) {
     if (!myId) return;
     const databases = getDatabases();
-    const perms = (uid: string) => [Permission.read(Role.user(uid)), Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))];
     let firstDocId: string | null = null;
     try {
-      const doc1 = await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: myId, friend_id: friendId, status: 'accepted' }, perms(myId));
+      const doc1 = await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: myId, friend_id: friendId, status: 'accepted' });
       firstDocId = doc1.$id;
-      await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' }, perms(friendId));
+      await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' });
       toast('Amigo adicionado!', 'success');
       setCandidates([]);
       setSearchInput('');

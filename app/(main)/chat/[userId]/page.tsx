@@ -2,7 +2,7 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Send } from 'lucide-react';
-import { Query, Permission, Role, ID } from 'appwrite';
+import { Query, ID } from 'appwrite';
 import { getAccount, getDatabases, getAppwriteClient } from '@/lib/appwrite/client';
 import { APPWRITE_DATABASE_ID, COLLECTIONS } from '@/lib/appwrite/config';
 
@@ -74,11 +74,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
         APPWRITE_DATABASE_ID,
         COLLECTIONS.MESSAGES,
         ID.unique(),
-        { from_user_id: myId, to_user_id: friendId, text: text.trim(), kind: 'text' },
-        [
-          Permission.read(Role.user(myId)), Permission.read(Role.user(friendId)),
-          Permission.delete(Role.user(myId)),
-        ]
+        { from_user_id: myId, to_user_id: friendId, text: text.trim(), kind: 'text' }
       );
       setText('');
     } catch (err) {

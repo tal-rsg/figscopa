@@ -2,7 +2,6 @@
 import { createContext, useCallback, useContext, useOptimistic, useState, useTransition } from 'react';
 import { getDatabases } from '@/lib/appwrite/client';
 import { APPWRITE_DATABASE_ID, COLLECTIONS } from '@/lib/appwrite/config';
-import { Permission, Role } from 'appwrite';
 
 type Collection = Record<string, number>;
 
@@ -59,8 +58,7 @@ export function CollectionProvider({
                 APPWRITE_DATABASE_ID,
                 COLLECTIONS.COLLECTION,
                 docId,
-                { user_id: userId, sticker_id: stickerId, count },
-                [Permission.read(Role.users()), Permission.update(Role.user(userId)), Permission.delete(Role.user(userId))]
+                { user_id: userId, sticker_id: stickerId, count }
               );
             }
           }
