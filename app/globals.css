@@ -228,6 +228,7 @@ a { color: inherit; text-decoration: none; }
 .fc-chat-input { display: flex; gap: 8px; padding: 12px; background: var(--fc-card); border: 1px solid var(--fc-line); border-radius: 0 0 var(--fc-radius-lg) var(--fc-radius-lg); border-top: 0; }
 .fc-chat-input input { flex: 1; padding: 10px 14px; border: 1px solid var(--fc-line); border-radius: 999px; background: var(--fc-bg); font-size: 14px; }
 .fc-chat-input input:focus { outline: 2px solid var(--fc-accent); outline-offset: -1px; }
+.fc-chat-date-sep { text-align: center; font-size: 11px; font-weight: 600; color: var(--fc-ink-muted); padding: 8px 0 4px; text-transform: capitalize; }
 
 /* ============================================================
    STATS

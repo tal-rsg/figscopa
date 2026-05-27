@@ -15,17 +15,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'A senha deve ter no mínimo 8 caracteres.' }, { status: 400 });
   }
 
-  const client = new Client().setEndpoint(APPWRITE_ENDPOINT).setProject(APPWRITE_PROJECT_ID);
-  const account = new Account(client);
+  // Admin client needed so session.secret is populated (node-appwrite v24 + Appwrite 1.6)
+  const adminClient = new Client()
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID)
+    .setKey(process.env.APPWRITE_API_KEY ?? '');
+  const account = new Account(adminClient);
 
   try {
     const user = await account.create(ID.unique(), email, password, name);
     const session = await account.createEmailPasswordSession(email, password);
-
-    const adminClient = new Client()
-      .setEndpoint(APPWRITE_ENDPOINT)
-      .setProject(APPWRITE_PROJECT_ID)
-      .setKey(process.env.APPWRITE_API_KEY ?? '');
     const adminDatabases = new Databases(adminClient);
 
     try {

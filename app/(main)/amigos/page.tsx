@@ -20,7 +20,7 @@ export default function AmigosPage() {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('matches');
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [candidates, setCandidates] = useState<Profile[]>([]);
   const [myId, setMyId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -81,18 +81,21 @@ export default function AmigosPage() {
   [friends, collection]);
 
   async function searchUser() {
-    if (!searchEmail.includes('@')) return toast('Informe um e-mail válido.', 'error');
+    const q = searchInput.trim();
+    if (!q) return toast('Digite um nome ou e-mail para buscar.', 'error');
     const databases = getDatabases();
     try {
+      const isEmail = q.includes('@');
       const res = await databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [
-        Query.equal('email', searchEmail.toLowerCase().trim()),
-        Query.limit(1),
+        isEmail
+          ? Query.equal('email', q.toLowerCase())
+          : Query.or([Query.equal('name', q), Query.search('name', q)]),
+        Query.limit(5),
       ]);
-      if (res.documents.length === 0) return toast('Usuário não encontrado.', 'error');
-      const found = res.documents[0] as unknown as Profile;
-      if (found.$id === myId) return toast('Esse é você!', 'default');
-      if (friends.find(f => f.$id === found.$id)) return toast('Esse usuário já é seu amigo.', 'default');
-      setCandidates([found]);
+      if (res.documents.length === 0) return toast('Nenhum usuário encontrado.', 'error');
+      const found = (res.documents as unknown as Profile[]).filter(p => p.$id !== myId && !friends.find(f => f.$id === p.$id));
+      if (found.length === 0) return toast('Nenhum usuário novo encontrado.', 'default');
+      setCandidates(found);
     } catch { toast('Erro ao buscar usuário.', 'error'); }
   }
 
@@ -107,7 +110,7 @@ export default function AmigosPage() {
       await databases.createDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, ID.unique(), { user_id: friendId, friend_id: myId, status: 'accepted' }, perms(friendId));
       toast('Amigo adicionado!', 'success');
       setCandidates([]);
-      setSearchEmail('');
+      setSearchInput('');
     } catch {
       if (firstDocId) {
         try { await databases.deleteDocument(APPWRITE_DATABASE_ID, COLLECTIONS.FRIENDSHIPS, firstDocId); } catch {}
@@ -201,8 +204,8 @@ export default function AmigosPage() {
           <div className="fc-card" style={{ marginBottom: 16 }}>
             <h3>Adicionar amigo por e-mail</h3>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input type="email" className="fc-search" style={{ flex: 1 }} value={searchEmail}
-                onChange={e => setSearchEmail(e.target.value)} placeholder="email@amigo.com"
+              <input className="fc-search" style={{ flex: 1 }} value={searchInput}
+                onChange={e => setSearchInput(e.target.value)} placeholder="Nome ou e-mail do amigo"
                 onKeyDown={e => e.key === 'Enter' && searchUser()} />
               <button className="fc-btn-primary" onClick={searchUser}>Buscar</button>
             </div>

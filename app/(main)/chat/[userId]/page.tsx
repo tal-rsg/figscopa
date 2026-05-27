@@ -16,6 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
     e.preventDefault();
     if (!text.trim() || !myId || sending) return;
     setSending(true);
+    setSendError('');
     const databases = getDatabases();
     try {
       await databases.createDocument(
@@ -79,11 +81,14 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
         ]
       );
       setText('');
-    } catch {}
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Erro ao enviar. Tente novamente.');
+    }
     setSending(false);
   }
 
-  const fmt = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   const initials = (name: string) => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -96,13 +101,23 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
 
       <div className="fc-chat-body" ref={bodyRef}>
         {messages.length === 0 && <div className="fc-empty-state" style={{ padding: '20px 0' }}>Nenhuma mensagem ainda. Diga oi!</div>}
-        {messages.map(msg => (
-          <div key={msg.$id} className={`fc-msg ${msg.from_user_id === myId ? 'is-me' : ''} ${msg.kind === 'proposal' ? 'is-proposal' : ''}`}>
-            <div className="fc-msg-text">{msg.text}</div>
-            <div className="fc-msg-time">{fmt(msg.$createdAt)}</div>
-          </div>
-        ))}
+        {messages.map((msg, i) => {
+          const showDate = i === 0 || fmtDate(msg.$createdAt) !== fmtDate(messages[i - 1].$createdAt);
+          return (
+            <div key={msg.$id}>
+              {showDate && (
+                <div className="fc-chat-date-sep">{fmtDate(msg.$createdAt)}</div>
+              )}
+              <div className={`fc-msg ${msg.from_user_id === myId ? 'is-me' : ''} ${msg.kind === 'proposal' ? 'is-proposal' : ''}`}>
+                <div className="fc-msg-text">{msg.text}</div>
+                <div className="fc-msg-time">{fmtTime(msg.$createdAt)}</div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {sendError && <div style={{ padding: '4px 16px', fontSize: 12, color: 'var(--fc-rep)' }}>{sendError}</div>}
 
       <form className="fc-chat-input" onSubmit={send}>
         <input value={text} onChange={e => setText(e.target.value)} placeholder="Digite uma mensagem..." disabled={!myId} />
