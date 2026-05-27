@@ -86,14 +86,27 @@ export default function AmigosPage() {
     const databases = getDatabases();
     try {
       const isEmail = q.includes('@');
-      const res = await databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [
+      const [byEmail, byName] = await Promise.allSettled([
         isEmail
-          ? Query.equal('email', q.toLowerCase())
-          : Query.or([Query.equal('name', q), Query.search('name', q)]),
-        Query.limit(5),
+          ? databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [Query.equal('email', q.toLowerCase()), Query.limit(5)])
+          : Promise.resolve({ documents: [] }),
+        !isEmail
+          ? databases.listDocuments(APPWRITE_DATABASE_ID, COLLECTIONS.PROFILES, [Query.equal('name', q), Query.limit(5)])
+          : Promise.resolve({ documents: [] }),
       ]);
-      if (res.documents.length === 0) return toast('Nenhum usuário encontrado.', 'error');
-      const found = (res.documents as unknown as Profile[]).filter(p => p.$id !== myId && !friends.find(f => f.$id === p.$id));
+
+      const seen = new Set<string>();
+      const docs: Profile[] = [];
+      for (const result of [byEmail, byName]) {
+        if (result.status === 'fulfilled') {
+          for (const d of result.value.documents) {
+            if (!seen.has(d.$id)) { seen.add(d.$id); docs.push(d as unknown as Profile); }
+          }
+        }
+      }
+
+      if (docs.length === 0) return toast('Nenhum usuário encontrado.', 'error');
+      const found = docs.filter(p => p.$id !== myId && !friends.find(f => f.$id === p.$id));
       if (found.length === 0) return toast('Nenhum usuário novo encontrado.', 'default');
       setCandidates(found);
     } catch { toast('Erro ao buscar usuário.', 'error'); }
